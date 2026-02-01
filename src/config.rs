@@ -5,6 +5,7 @@ pub struct Config {
     pub database_url: String,
     pub host: String,
     pub port: u16,
+    pub railway_api_token: Option<String>,
 }
 
 impl Config {
@@ -19,6 +20,7 @@ impl Config {
                 .unwrap_or_else(|_| "3000".to_string())
                 .parse()
                 .expect("PORT must be a valid number"),
+            railway_api_token: env::var("RAILWAY_API_TOKEN").ok(),
         }
     }
 

@@ -22,20 +22,24 @@ pub async fn create_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> 
 pub async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     tracing::info!("Running database migrations...");
 
-    // Read and execute migration file
-    let migration_sql = include_str!("../../migrations/001_initial.sql");
+    let migrations = [
+        include_str!("../../migrations/001_initial.sql"),
+        include_str!("../../migrations/002_railway_deployment.sql"),
+    ];
 
-    // Split by statement and execute each
-    for statement in migration_sql.split(';') {
-        let statement = statement.trim();
-        if !statement.is_empty() {
-            match sqlx::query(statement).execute(pool).await {
-                Ok(_) => {}
-                Err(e) => {
-                    // Ignore "table already exists" errors
-                    let err_str = e.to_string();
-                    if !err_str.contains("already exists") {
-                        tracing::warn!("Migration statement warning: {}", e);
+    for migration_sql in migrations {
+        // Split by statement and execute each
+        for statement in migration_sql.split(';') {
+            let statement = statement.trim();
+            if !statement.is_empty() {
+                match sqlx::query(statement).execute(pool).await {
+                    Ok(_) => {}
+                    Err(e) => {
+                        // Ignore "table already exists" or "duplicate column" errors
+                        let err_str = e.to_string();
+                        if !err_str.contains("already exists") && !err_str.contains("duplicate column") {
+                            tracing::warn!("Migration statement warning: {}", e);
+                        }
                     }
                 }
             }

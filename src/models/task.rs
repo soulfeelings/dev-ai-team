@@ -64,14 +64,18 @@ impl Task {
     }
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Deserialize, ToSchema, Default)]
 pub struct CreateTaskRequest {
     pub title: String,
-    pub description: String,
-    pub acceptance_criteria: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub acceptance_criteria: Option<String>,
     #[serde(default)]
     pub priority: i32,
+    #[serde(default)]
     pub parent_task_id: Option<String>,
+    #[serde(default)]
     pub branch_name: Option<String>,
 }
 
@@ -92,8 +96,8 @@ impl Task {
             id: Uuid::new_v4().to_string(),
             project_id,
             title: req.title,
-            description: req.description,
-            acceptance_criteria: req.acceptance_criteria,
+            description: req.description.unwrap_or_default(),
+            acceptance_criteria: req.acceptance_criteria.unwrap_or_default(),
             status: TaskStatus::Backlog.to_string(),
             priority: req.priority,
             parent_task_id: req.parent_task_id,

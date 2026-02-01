@@ -28,8 +28,8 @@ impl ProjectRepository {
     pub async fn create(pool: &SqlitePool, project: &Project) -> AppResult<()> {
         sqlx::query(
             r#"
-            INSERT INTO projects (id, name, github_url, local_path, default_branch, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO projects (id, name, github_url, local_path, default_branch, deployment_status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             "#,
         )
         .bind(&project.id)
@@ -37,6 +37,7 @@ impl ProjectRepository {
         .bind(&project.github_url)
         .bind(&project.local_path)
         .bind(&project.default_branch)
+        .bind(&project.deployment_status)
         .bind(&project.created_at)
         .bind(&project.updated_at)
         .execute(pool)
@@ -88,5 +89,62 @@ impl ProjectRepository {
         }
 
         Ok(())
+    }
+
+    pub async fn update_deployment(
+        pool: &SqlitePool,
+        id: &str,
+        railway_project_id: &str,
+        railway_service_id: &str,
+        railway_environment_id: &str,
+        deployment_url: Option<&str>,
+        deployment_status: &str,
+    ) -> AppResult<Project> {
+        let updated_at = Utc::now().to_rfc3339();
+
+        sqlx::query(
+            r#"
+            UPDATE projects
+            SET railway_project_id = ?, railway_service_id = ?, railway_environment_id = ?,
+                deployment_url = ?, deployment_status = ?, updated_at = ?
+            WHERE id = ?
+            "#,
+        )
+        .bind(railway_project_id)
+        .bind(railway_service_id)
+        .bind(railway_environment_id)
+        .bind(deployment_url)
+        .bind(deployment_status)
+        .bind(&updated_at)
+        .bind(id)
+        .execute(pool)
+        .await?;
+
+        Self::find_by_id(pool, id).await
+    }
+
+    pub async fn update_deployment_status(
+        pool: &SqlitePool,
+        id: &str,
+        deployment_url: Option<&str>,
+        deployment_status: &str,
+    ) -> AppResult<Project> {
+        let updated_at = Utc::now().to_rfc3339();
+
+        sqlx::query(
+            r#"
+            UPDATE projects
+            SET deployment_url = ?, deployment_status = ?, updated_at = ?
+            WHERE id = ?
+            "#,
+        )
+        .bind(deployment_url)
+        .bind(deployment_status)
+        .bind(&updated_at)
+        .bind(id)
+        .execute(pool)
+        .await?;
+
+        Self::find_by_id(pool, id).await
     }
 }
