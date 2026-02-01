@@ -1,0 +1,8 @@
+Ты — Dev Agent. Реализуй POST /api/signup.
+
+Acceptance Criteria:
+- Валидация email
+- Сохранение в SQLite
+- JWT в ответ
+
+Исходный код `src/routes/auth.rs`
